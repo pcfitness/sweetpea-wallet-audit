@@ -41,3 +41,43 @@ All wallet addresses are public and viewable on [Solscan](https://solscan.io). T
 
 **Sweet Pea launched fairly via pump.fun.  
 No insiders. No preloads. Just truth in the mint.**
+
+======================================
+
+Audit Script
+
+#!/bin/bash
+
+# === Windows wallet directory (via WSL) ===
+WALLET_DIR="/mnt/c/SolanaWallets"
+
+# === Sweet Pea Token Mint Address ===
+TOKEN_MINT="FGXRANWAqE9WB7qmipLznH61N2ssdG9YMKCivTqspump"
+
+# === Find all JSON keypair files dynamically ===
+wallets=($(ls "$WALLET_DIR"/*.json))
+
+echo "🔍 Auto-scanning Sweet Pea wallets..."
+echo ""
+
+for wallet_path in "${wallets[@]}"; do
+    wallet_file=$(basename "$wallet_path")
+    echo "🌱 Wallet: $wallet_file"
+
+    # Get wallet address
+    wallet_address=$(solana address --keypair "$wallet_path" 2>/dev/null)
+
+    # Get SOL balance
+    sol_balance=$(solana balance --keypair "$wallet_path" 2>/dev/null)
+    echo "   💰 SOL Balance: ${sol_balance:-Error or 0 SOL}"
+
+    # Get SWEETP token balance
+    token_balance=$(spl-token balance "$TOKEN_MINT" --owner "$wallet_address" 2>/dev/null)
+    echo "   🫘 SWEETP Balance: ${token_balance:-0 (No token account found)}"
+
+    # Show other token accounts (excluding SWEETP)
+    echo "   📦 Other Token Accounts:"
+    spl-token accounts --owner "$wallet_address" | grep -v "$TOKEN_MINT" || echo "      ✅ No junk or extra token accounts detected."
+
+    echo ""
+echo "✅ Full audit complete. Now you’re cleared to burn dust, flex that transparency, and sweep up that RugCheck score."
